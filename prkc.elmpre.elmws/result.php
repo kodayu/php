@@ -1,35 +1,25 @@
 <?php
-require("./include/head.php");
-?>
 
-<?php
-//ȡԭ
-$filename=$_FILES["fileinput"]["name"];
-//ȡչ
-//$file_ext=explode(".",$filename);
-//$file_ext=$file_ext[count($file_ext)-1];
-//$file_ext=strtolower($file_ext);
+$filename = $_FILES["filebutton"]["name"];
 
-//жļС
+//deal with the file(get $filename,$newname,copy file to upload)
 $tocomp = 0;
-if($_FILES["fileinput"]["size"]>20*1024*1024)
+if($_FILES["filebutton"]["size"]>20*1024*1024)
 {
 	echo "<span class=\"citation\">Sorry, the file you uploaded is too large (> 20M), please contact Zexian Liu.</span><p>";
 	exit;
 }
-else if($_FILES['fileinput']['error'] == UPLOAD_ERR_NO_FILE)
+else if($_FILES["filebutton"]['error'] == UPLOAD_ERR_NO_FILE)
 {
-	echo "<span class=\"citation red\">Note: we'll use the default pdb file.</span><p>";
-	$filename = "Default_1AK0.pdb";
-	$newname = "1AK0.pdb";
+	echo "<span class=\"citation red\">Note: we'll use the default fasta file.</span><p>";
+	$filename = "Default_example.fasta";
+	$newname = "example.fasta";
 	$tocomp = 1;
 }
-else if($_FILES['fileinput']['error'] == UPLOAD_ERR_OK)
+else if($_FILES["filebutton"]['error'] == UPLOAD_ERR_OK)
 {
-	//һµļ
 	$newname=date("YmdHis").".".$filename;
-	//ӻаļƵĿַ
-	copy($_FILES["fileinput"]["tmp_name"],"upload//".$newname);
+	copy($_FILES["filebutton"]["tmp_name"],"upload//".$newname);
 	$tocomp = 1;
 }
 else
@@ -37,33 +27,33 @@ else
 	echo "<span class=\"citation\">Sorry, error occured when upload the file, please check your file or contact Zexian Liu.</span><p>";
 }
 
+
 if($tocomp == 1)
 {
-	$chain = $_POST["chain"];
-	echo "<span class=\"citation\">Prediction for PDB: ".$filename."&nbsp;&nbsp;&nbsp;&nbsp;Chain: ".$chain."&nbsp;&nbsp;&nbsp;&nbsp;";
-	echo "<a href=\"./upload/$newname\">The uploaded pdb file</a><br></span><p><p><p><p>";
-	$exe = "/home2/biocucko/bin/java/jre/bin/java -jar ./comp/test.jar -www ./upload/".$newname." ".$chain;
+	$chain = $_POST["radios"];
+	echo "<span class=\"citation\">Prediction for fasta file: $filename <br>";
+	chdir ('/var/www/html/prkc/libsvm-3.22/python/');
+	$exe = "python prkc_predict.py -T ../../upload/".$newname." -j ".$chain." -c 32.0 -g 2.0 ./files/model_peptide.txt ./files/trainscore";
 	//echo $exe;
-	exec($exe, $array);
-	#exec("java -jar ./comp/test.jar -www 1A5T A", $array);
-	#exec("./test.sh", $array);
-	$resultArray = array();
-	foreach ($array as $lineStr)
-	{
-		echo $lineStr."\n";
+	exec($exe,$output);
+	foreach ($output as $value){
+		if (preg_match("/^>/",$value)){
+			$value = preg_replace("/>/","",$value);
+			echo "$value <br>";
+		}
 	}
+	echo $output;
+//	$filename = "../../input.txt";
+//	$handle = fopen($filename,'w+');
+//	fwrite($handle,$output);
+//	fclose($handle);
+//	chdir ('/var/www/html/prkc/');
+	
+	
 }
-#require("./comp/comp.php");
-#exec("java -jar ./comp/test.jar", $array);
-#exec("./test.sh", $array);
-#$resultArray = array();
-#foreach ($array as $lineStr)
-#{
-#	echo $lineStr;
-#}
-?>
 
-<?php
-require("./include/view.php");
-require("./include/foot.php");
+
+echo "<h4>Show all lines with the peptide </h4>";
 ?>
+<br>
+<a href="index.php">Return to main page</a>
